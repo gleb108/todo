@@ -49,7 +49,7 @@ OptionParser.new do |opts|
     options[:file] = f
   end 
 
-  opts.on('-e', '--edit', 'Edit todo list') do |e|
+  opts.on('-e', '--edit', 'Edit todo list with your favorite editor (use "export EDITOR=..."') do |e|
     options[:edit] = e
   end
 
@@ -66,10 +66,6 @@ OptionParser.new do |opts|
     exit
   end
 
-  opts.on_tail('--version', 'Show version') do
-    puts OptionParser::Version.join('.')
-    exit
-  end
 
 
 end.parse!
