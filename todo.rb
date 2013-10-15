@@ -106,7 +106,7 @@ if options[:done]
   lines.each do |line|
     if n == options[:done].to_i
       donefile = File.open(done_list, File::WRONLY|File::APPEND|File::CREAT, 0600)
-      donefile.puts line
+      donefile.puts "#{Time.now} #{line}"
       donefile.close
       puts "Item #{options[:done]} was moved to the #{done_list}";
     else 
