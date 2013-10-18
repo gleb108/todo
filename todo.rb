@@ -3,15 +3,33 @@
 #coloros for priorities
 clr_pri = {
   'A' => :red,
-  'B' => :blue,
-  'C' => :green,
+  'B' => :red,
+  'C' => :lignt_red,
   'D' => :yellow,
-  'E' => :cyan,
-  'F' => :white,
-  'G' => :light_blue,
-  'H' => :light_cyan,
-
+  'E' => :yellow,
+  'F' => :light_yellow,
+  'G' => :green,
+  'H' => :green,
+  'I' => :light_green,
+  'J' => :cyan,
+  'K' => :cyan,
+  'L' => :light_cyan,
+  'M' => :blue,
+  'N' => :blue,
+  'O' => :light_blue,
+  'P' => :magenta,
+  'Q' => :magenta,
+  'R' => :light_magenta,
+  'S' => :white,
+  'T' => :white,
+  'U' => :white,
+  'V' => :light_yellow,
+  'W' => :light_blue,
+  'X' => :light_green,
+  'Y' => :light_cyan,
+  'Z' => :light_magenta,
 }
+
 
 #colors to deadlines
 clr_deadline = :red
@@ -128,7 +146,7 @@ IO.foreach(options[:file]) do |line|
   n=n+1
   case line.to_s 
     when /^(\([A-Z]\)\s)?\d{4}-\d{2}-\d{2}\s/
-       deadline_list.[]=(n, line.colorize(clr_deadline))
+       deadline_list.[]=(n, line.colorize(clr_deadline).underline)
     when /^\(([A-Z])\)\s/ 
        priority_list.[]=(n, line.colorize(clr_pri[$1]))
     else 
