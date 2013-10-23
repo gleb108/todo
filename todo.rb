@@ -67,6 +67,10 @@ OptionParser.new do |opts|
     options[:file] = f
   end 
 
+  opts.on('-l', '--limit REGEXP', String, 'Show only item which match REGEXP') do |l|
+    options[:limit] = l
+  end 
+
   opts.on('-e', '--edit', 'Edit todo list with your favorite editor (use "export EDITOR=..."') do |e|
     options[:edit] = e
   end
@@ -134,6 +138,7 @@ if options[:done]
   end
 end
 
+regexp = Regexp.compile (options[:limit]) if options[:limit]
 
 
 n=0
@@ -141,9 +146,14 @@ priority_list={}
 deadline_list={}
 list={}
 IO.foreach(options[:file]) do |line|
+  n=n+1
   line.chomp!
   next if line =~ /^$/
-  n=n+1
+
+  if regexp 
+      next unless line =~ regexp
+  end 
+
   case line.to_s 
     when /^(\([A-Z]\)\s)?\d{4}-\d{2}-\d{2}\s/
        deadline_list.[]=(n, line.colorize(clr_deadline).underline)
