@@ -89,18 +89,20 @@ OptionParser.new do |opts|
     options[:done] = d
   end
 
+  opts.on('--encrypt FILE', String, 'Encrypt file to STDIN') do |encrypt|
+    options[:encrypt] = encrypt
+  end
+
+  opts.on('--decrypt ENCRYPTED_FILE', String, 'Decrypt encrypted file to STDIN') do |decrypt|
+    options[:decrypt] = decrypt
+  end
+
   opts.on_tail('-h', '--help', 'Show this message') do
     puts opts
     exit
   end
 
 end.parse!
-
-if ENCRYPTION
-  sha256 = Digest::SHA2.new(256)
-  #aes = OpenSSL::Cipher.new("AES-256-CFB")
-  KEY = sha256.digest(my_key)
-end
 
 def get_encrypted_items (file)
   todo_list = File.open(file, 'r')
@@ -111,7 +113,7 @@ def get_encrypted_items (file)
     aes.decrypt
     aes.key = KEY
     aes.iv = IV
-    tmp=Base64.decode64(line)
+    tmp=Base64.strict_decode64(line)
     decrypted_line = aes.update(tmp) + aes.final
     items << decrypted_line
   end
@@ -135,7 +137,13 @@ def encrypt_item (item)
   aes.key = KEY
   aes.iv = IV
   encrypted_item = aes.update(item) + aes.final
-  return Base64.encode64(encrypted_item)
+  return Base64.strict_encode64(encrypted_item)
+end
+
+
+if ENCRYPTION or options[:decrypt] or options[:encrypt]
+  sha256 = Digest::SHA2.new(256)
+  KEY = sha256.digest(my_key)
 end
 
 
@@ -145,6 +153,24 @@ if options[:verbose]
   p options
   p ARGV
 end
+
+if options[:decrypt] 
+  lines = get_encrypted_items(options[:decrypt])
+    lines.each do |line|
+    puts line
+  end
+  exit;
+end
+
+if options[:encrypt] 
+  lines = get_plain_items(options[:encrypt])
+    lines.each do |line|
+    puts encrypt_item(line)
+  end
+  exit;
+end
+
+
 
 if options[:edit] 
    if ENCRYPTION 
