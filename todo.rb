@@ -42,14 +42,20 @@ else
 end
 
 #done list
-done_list = ENV['HOME'] + '/done.txt';
+done_list = ENV['HOME'] + '/done1.txt';
 
-
+ENCRYPTION = true
+my_key ='Bond, James Bond'
+IV = "0.23379912027482785"
+tmp = ENV['HOME'] + '/todo.tmp';
 
 
 require 'optparse'
 require 'colorize'
 require 'readline'
+require 'openssl'
+require 'digest/sha2'
+require 'base64'
 
 
 options = {}
@@ -57,7 +63,7 @@ OptionParser.new do |opts|
   opts.banner = 'Usage: todo.rb [options]'
 
   #default options
-  options[:file] = File.join(ENV['HOME'], 'todo.txt'); 
+  options[:file] = File.join(ENV['HOME'], 'todo1.txt'); 
 
   opts.on('-v', '--verbose', 'Run verbosely') do |v|
     options[:verbose] = v
@@ -67,7 +73,7 @@ OptionParser.new do |opts|
     options[:file] = f
   end 
 
-  opts.on('-l', '--limit REGEXP', String, 'Show only item which match REGEXP') do |l|
+  opts.on('-l', '--limit REGEXP', String, 'Show only items that match REGEXP') do |l|
     options[:limit] = l
   end 
 
@@ -88,9 +94,52 @@ OptionParser.new do |opts|
     exit
   end
 
-
-
 end.parse!
+
+if ENCRYPTION
+  sha256 = Digest::SHA2.new(256)
+  #aes = OpenSSL::Cipher.new("AES-256-CFB")
+  KEY = sha256.digest(my_key)
+end
+
+def get_encrypted_items (file)
+  todo_list = File.open(file, 'r')
+  aes = OpenSSL::Cipher.new("AES-256-CFB") if ENCRYPTION
+  items=[]
+  IO.foreach(file) do |line|
+    line.chomp!
+    aes.decrypt
+    aes.key = KEY
+    aes.iv = IV
+    tmp=Base64.decode64(line)
+    decrypted_line = aes.update(tmp) + aes.final
+    items << decrypted_line
+  end
+  return items
+end
+
+def get_plain_items (file)
+  todo_list = File.open(file, 'r')
+  items=[]
+  IO.foreach(file) do |line|
+    line.chomp!
+    items << line
+  end
+  return items
+end
+
+
+def encrypt_item (item)
+  aes = OpenSSL::Cipher.new("AES-256-CFB")
+  aes.encrypt
+  aes.key = KEY
+  aes.iv = IV
+  encrypted_item = aes.update(item) + aes.final
+  return Base64.encode64(encrypted_item)
+end
+
+
+
 
 if options[:verbose] 
   p options
@@ -98,7 +147,25 @@ if options[:verbose]
 end
 
 if options[:edit] 
-   exec("#{editor} #{options[:file]}")
+   if ENCRYPTION 
+     tmp_file = File.open(tmp, File::WRONLY|File::TRUNC|File::CREAT, 0600)
+     lines = get_encrypted_items(options[:file])
+       lines.each do |line|
+       tmp_file.puts line
+     end
+     tmp_file.close
+
+     system("#{editor} #{tmp}")
+
+     lines = get_plain_items(tmp)
+     todofile = File.open(options[:file], 'w+')
+     lines.each do |line|
+         todofile.puts encrypt_item(line);
+     end
+     todofile.close
+   else 
+     exec("#{editor} #{options[:file]}") 
+   end
 end
 
 if options[:add] 
@@ -110,13 +177,17 @@ if options[:add]
     exit
   end
   todofile = File.open(options[:file], 'a')
-  todofile.puts line
+  todofile.puts encrypt_item(line);
   todofile.close
 end
 
 if options[:done]
-
-  lines = IO.readlines(options[:file])
+ 
+  if ENCRYPTION 
+    lines = get_encrypted_items(options[:file])
+  else 
+    lines = get_plain_items(options[:file])
+  end
 
   if options[:done].to_i <=0 or options[:done].to_i > lines.size
      puts "invalid option:  --done #{options[:done]}"
@@ -128,11 +199,20 @@ if options[:done]
   lines.each do |line|
     if n == options[:done].to_i
       donefile = File.open(done_list, File::WRONLY|File::APPEND|File::CREAT, 0600)
-      donefile.puts "#{Time.now} #{line}"
+      item = Time.now.to_s + ' ' + line 
+      if ENCRYPTION 
+        donefile.puts encrypt_item(item)
+      else 
+        donefile.puts item
+      end
       donefile.close
       puts "Item #{options[:done]} was moved to the #{done_list}";
     else 
-      file.puts line
+      if ENCRYPTION
+        file.puts encrypt_item(line)
+      else 
+        file.puts line
+      end
     end
     n=n+1
   end
@@ -145,9 +225,16 @@ n=0
 priority_list={}
 deadline_list={}
 list={}
-IO.foreach(options[:file]) do |line|
-  n=n+1
+
+if ENCRYPTION
+  lines = get_encrypted_items(options[:file])
+else 
+  lines = get_plain_items(options[:file])
+end
+
+lines.each do |line|
   line.chomp!
+  n=n+1
   next if line =~ /^$/
 
   if regexp 
@@ -176,5 +263,6 @@ end
 list.sort.each do |n, line|
   puts "#{n} #{line}"
 end
+
 
 
