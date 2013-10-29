@@ -1,0 +1,55 @@
+# YAML config file
+
+
+editor: /usr/bin/vim   
+
+#todo list
+todo_list: /home/gleb/todo/todo.txt
+
+#list for done items
+done_list: /home/gleb/todo/done.txt
+
+#temporarily file 
+tmp: /tmp/todo.tmp
+
+################ ENCRYPTION ##################
+
+encryption: true
+my_key: "Just Because You're Paranoid, Doesn't Mean They're Not Out to Get You"
+iv: "0.23379912027482785"
+
+
+################## COLORS ####################
+
+#color for deadline items
+clr_deadline: :red
+
+#colors for priorities
+clr_pri: 
+  A: :red
+  B: :red
+  C: :lignt_red
+  D: :yellow
+  E: :yellow
+  F: :light_yellow
+  G: :green
+  H: :green
+  I: :light_green
+  J: :cyan
+  K: :cyan
+  L: :light_cyan
+  M: :blue
+  N: :blue
+  O: :light_blue
+  P: :magenta
+  Q: :magenta
+  R: :light_magenta
+  S: :white
+  T: :white
+  U: :white
+  V: :light_yellow
+  W: :light_blue
+  X: :light_green
+  Y: :light_cyan
+  Z: :light_magenta
+
