@@ -1,54 +1,5 @@
 #!/usr/bin/ruby 
 
-#coloros for priorities
-clr_pri = {
-  'A' => :red,
-  'B' => :red,
-  'C' => :lignt_red,
-  'D' => :yellow,
-  'E' => :yellow,
-  'F' => :light_yellow,
-  'G' => :green,
-  'H' => :green,
-  'I' => :light_green,
-  'J' => :cyan,
-  'K' => :cyan,
-  'L' => :light_cyan,
-  'M' => :blue,
-  'N' => :blue,
-  'O' => :light_blue,
-  'P' => :magenta,
-  'Q' => :magenta,
-  'R' => :light_magenta,
-  'S' => :white,
-  'T' => :white,
-  'U' => :white,
-  'V' => :light_yellow,
-  'W' => :light_blue,
-  'X' => :light_green,
-  'Y' => :light_cyan,
-  'Z' => :light_magenta,
-}
-
-
-#colors to deadlines
-clr_deadline = :red
-
-#editor 
-if ENV['EDITOR']
-   editor = ENV['EDITOR'];
-else 
-   editor = '/usr/bin/vi'   
-end
-
-#done list
-done_list = ENV['HOME'] + '/done1.txt';
-
-ENCRYPTION = true
-my_key ='Bond, James Bond'
-IV = "0.23379912027482785"
-tmp = ENV['HOME'] + '/todo.tmp';
-
 
 require 'optparse'
 require 'colorize'
@@ -56,6 +7,8 @@ require 'readline'
 require 'openssl'
 require 'digest/sha2'
 require 'base64'
+require 'yaml'
+
 
 
 options = {}
@@ -63,12 +16,16 @@ OptionParser.new do |opts|
   opts.banner = 'Usage: todo.rb [options]'
 
   #default options
-  options[:file] = File.join(ENV['HOME'], 'todo1.txt'); 
+  options[:config] = File.join(ENV['HOME'], '.todorc'); 
 
   opts.on('-v', '--verbose', 'Run verbosely') do |v|
     options[:verbose] = v
   end
  
+  opts.on('-c', '--config CONFIG', String, 'Configuration file (default is $HOME/.todorc') do |c|
+    options[:config] = c
+  end 
+
   opts.on('-f', '--file TODO_LIST', String, 'Todo file (default is $HOME/todo.txt') do |f|
     options[:file] = f
   end 
@@ -103,6 +60,51 @@ OptionParser.new do |opts|
   end
 
 end.parse!
+
+#Reading config file
+puts "Using config #{options[:config]}" if options[:verbose]
+config = YAML.load_file(options[:config])
+
+if config['editor']
+  editor = config['editor']
+elsif ENV['EDITOR'] 
+  editor = ENV['EDITOR'] 
+else 
+  editor = '/usr/bin/vi'   
+end
+puts "editor = #{editor}" if options[:verbose]
+
+if (options[:file])
+  todo_list = options[:file]
+elsif config['todo_list']
+  todo_list = config['todo_list']
+else 
+  todo_list = File.join(ENV['HOME'], 'todo.txt'); 
+end
+puts "todo_list = #{todo_list}" if options[:verbose]
+
+unless File.exist?(todo_list) 
+  file = File.open(todo_list, File::WRONLY|File::TRUNC|File::CREAT, 0600)
+  file.close 
+end
+
+done_list=config['done_list'] if config['done_list']
+puts "done_list = #{done_list}" if options[:verbose]
+
+if config['tmp']
+  tmp = config['tmp']
+else 
+  tmp = '/tmp/todo.tmp'
+end
+
+ENCRYPTION = config['encryption']
+puts "encryption = true" if options[:verbose]
+
+my_key = config['my_key']
+IV = config['iv']
+clr_deadline = config['clr_deadline']
+clr_pri=config['clr_pri']
+
 
 def get_encrypted_items (file)
   todo_list = File.open(file, 'r')
@@ -148,15 +150,9 @@ end
 
 
 
-
-if options[:verbose] 
-  p options
-  p ARGV
-end
-
 if options[:decrypt] 
   lines = get_encrypted_items(options[:decrypt])
-    lines.each do |line|
+  lines.each do |line|
     puts line
   end
   exit;
@@ -164,7 +160,7 @@ end
 
 if options[:encrypt] 
   lines = get_plain_items(options[:encrypt])
-    lines.each do |line|
+  lines.each do |line|
     puts encrypt_item(line)
   end
   exit;
@@ -175,7 +171,7 @@ end
 if options[:edit] 
    if ENCRYPTION 
      tmp_file = File.open(tmp, File::WRONLY|File::TRUNC|File::CREAT, 0600)
-     lines = get_encrypted_items(options[:file])
+     lines = get_encrypted_items(todo_list)
        lines.each do |line|
        tmp_file.puts line
      end
@@ -184,13 +180,13 @@ if options[:edit]
      system("#{editor} #{tmp}")
 
      lines = get_plain_items(tmp)
-     todofile = File.open(options[:file], 'w+')
+     todofile = File.open(todo_list, 'w+')
      lines.each do |line|
          todofile.puts encrypt_item(line);
      end
      todofile.close
    else 
-     exec("#{editor} #{options[:file]}") 
+     exec("#{editor} #{todo_list}") 
    end
 end
 
@@ -202,7 +198,7 @@ if options[:add]
     system('stty', stty_save) # Restore
     exit
   end
-  todofile = File.open(options[:file], 'a')
+  todofile = File.open(todo_list, 'a')
   todofile.puts encrypt_item(line);
   todofile.close
 end
@@ -210,9 +206,9 @@ end
 if options[:done]
  
   if ENCRYPTION 
-    lines = get_encrypted_items(options[:file])
+    lines = get_encrypted_items(todo_list)
   else 
-    lines = get_plain_items(options[:file])
+    lines = get_plain_items(todo_list)
   end
 
   if options[:done].to_i <=0 or options[:done].to_i > lines.size
@@ -220,7 +216,7 @@ if options[:done]
      exit
   end 
 
-  file = File.open(options[:file], 'w+')
+  file = File.open(todo_list, 'w+')
   n=1
   lines.each do |line|
     if n == options[:done].to_i
@@ -253,9 +249,9 @@ deadline_list={}
 list={}
 
 if ENCRYPTION
-  lines = get_encrypted_items(options[:file])
+  lines = get_encrypted_items(todo_list)
 else 
-  lines = get_plain_items(options[:file])
+  lines = get_plain_items(todo_list)
 end
 
 lines.each do |line|
