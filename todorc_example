@@ -15,7 +15,11 @@ tmp: /tmp/todo.tmp
 ################ ENCRYPTION ##################
 
 encryption: true
+
 my_key: "Just Because You're Paranoid, Doesn't Mean They're Not Out to Get You"
+
+# Warning! You should use unique IV (like as key). Please change this value.
+# You can generate random IV by command ruby -e 'puts rand.to_s'
 iv: "0.23379912027482785"
 
 
