@@ -26,9 +26,9 @@ Set
     
     iv: "0.67379912027482785"
 
-Key and iv must be unique. You can use command 
+Key and iv must be unique. You can use this command to generate unique iv
 >ruby -e 'puts rand.to_s' 
-to generate iv
+
 
 Copy this .todorc config to another computes where you're going to use this.
 
