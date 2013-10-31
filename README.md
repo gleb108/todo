@@ -13,6 +13,8 @@ but I need some additional features. So I decided to write my own client.
 
 ## HOWTO use crypto 
 
+_Caveat: crypto isn't supported in mobile client so you can use crypto only if you use todo.txt on PC's._
+
 I never plan something evil but I don't like the idea that companies can use my private todo list.
 This why I like to encrypt it before to sync it via clouds. 
 First I tried to use shell wrapper with EncFS but it worked too slow, so I had to implement crypto inside the client.
