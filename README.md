@@ -19,9 +19,9 @@ First I tried to use shell wrapper with EncFS but it worked too slow, so I had t
 
 If you want to use crypto you need to edit your .todorc config.  
 Set 
->encryption: true
->my_key: "My passphrase"
->iv: "0.67379912027482785"
+    encryption: true
+    my_key: "My passphrase"
+    iv: "0.67379912027482785"
 
 Key and iv must be unique. You can use command ruby -e 'puts rand.to_s' to generate iv
 
