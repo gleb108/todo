@@ -11,7 +11,7 @@ but I need some additional features. So I decided to write my own client.
  * This client support fast and strong crypto. This is useful where you sync list via clouds.
 
 
-== HOWTO use crypto 
+## HOWTO use crypto 
 
 I never plan something evil but I don't like the idea that companies can use my private todo list.
 This why I like to encrypt it before to sync it via clouds. 
